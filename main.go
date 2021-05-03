@@ -74,11 +74,16 @@ func GetMessage(aydURL *url.URL, target string) string {
 }
 
 func main() {
+	if len(os.Args) != 5 {
+		fmt.Fprintln(os.Stderr, "$ ayd-slack-alert SLACK_URI TARGET_URI TARGET_STATUS TARGET_CHECKED_AT")
+		os.Exit(2)
+	}
+
 	fmt.Printf("ayd-slack-alert %s (%s): ", version, commit)
 
-	target := GetRequiredEnv("ayd_target")
-	status := GetRequiredEnv("ayd_status")
-	checkedAt, err := time.Parse(time.RFC3339, GetRequiredEnv("ayd_checked_at"))
+	target := os.Args[2]
+	status := os.Args[3]
+	checkedAt, err := time.Parse(time.RFC3339, os.Args[4])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Environment variable `ayd_checked_at` is invalid: %s\n", err)
 		os.Exit(2)
