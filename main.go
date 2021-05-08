@@ -3,13 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/macrat/ayd/lib-ayd"
 	"github.com/slack-go/slack"
 )
 
@@ -29,94 +28,71 @@ func GetEnv(key string, default_ string) string {
 	return value
 }
 
-func GetRequiredEnv(key string) string {
+func GetRequiredEnv(logger ayd.Logger, key string) string {
 	value := GetEnv(key, "")
 	if value == "" {
-		fmt.Fprintf(os.Stderr, "Environment variable `%s` is required.\n", key)
-		os.Exit(2)
+		logger.Failure(fmt.Sprintf("Environment variable `%s` is required", key))
+		os.Exit(0)
 	}
 	return value
 }
 
-func GetMessage(aydURL *url.URL, target string) string {
-	u, err := aydURL.Parse("status.json")
+func GetMessage(aydURL, targetURL *url.URL) (string, error) {
+	resp, err := ayd.Fetch(aydURL)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to generate status endpoint URL: %s\n", err)
-		os.Exit(1)
+		return "", fmt.Errorf("failed to fetch status: %w", err)
 	}
 
-	resp, err := http.Get(u.String())
+	rs, err := resp.RecordsOf(targetURL)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to fetch message: %s\n", err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	var msg struct {
-		Incidents []struct {
-			Target  string `json:"target"`
-			Message string `json:"message"`
-		} `json:"current_incidents"`
+		return "", fmt.Errorf("failed to fetch status: %w", err)
 	}
 
-	if err = json.NewDecoder(resp.Body).Decode(&msg); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to parse status data: %s\n", err)
-		return ""
-	}
-
-	for _, incident := range msg.Incidents {
-		if incident.Target == target {
-			return incident.Message
-		}
-	}
-	fmt.Fprintf(os.Stderr, "No such incident information: %s\n", target)
-	return ""
+	return rs[len(rs)-1].Message, nil
 }
 
 func main() {
-	if len(os.Args) != 5 {
-		fmt.Fprintln(os.Stderr, "$ ayd-slack-alert SLACK_URI TARGET_URI TARGET_STATUS TARGET_CHECKED_AT")
-		os.Exit(2)
-	}
-
-	fmt.Printf("ayd-slack-alert %s (%s): ", version, commit)
-
-	target := os.Args[2]
-	status := os.Args[3]
-	checkedAt, err := time.Parse(time.RFC3339, os.Args[4])
+	args, err := ayd.ParseAlertPluginArgs()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Environment variable `ayd_checked_at` is invalid: %s\n", err)
+		fmt.Fprintln(os.Stderr, "$ ayd-slack-alert MAILTO_URI TARGET_URI TARGET_STATUS TARGET_CHECKED_AT")
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
+
+	logger := ayd.NewLogger(args.AlertURL)
+
+	webhookURL := GetRequiredEnv(logger, "slack_webhook_url")
 
 	aydURL, err := url.Parse(GetEnv("ayd_url", "http://localhost:9000"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Environment variable `ayd_url` is invalid: %s\n", err)
-		os.Exit(2)
+		logger.Failure(fmt.Sprintf("environment variable `ayd_url` is invalid: %s", err))
+		return
 	}
 	statusPage, err := aydURL.Parse("status.html")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to generate status page URL: %s\n", err)
-		os.Exit(1)
+		logger.Failure(fmt.Sprintf("failed to generate status page URL: %s", err))
+		return
 	}
 
-	message := GetMessage(aydURL, target)
+	message, err := GetMessage(aydURL, args.TargetURL)
+	if err != nil {
+		logger.Unknown(err.Error())
+	}
 
 	attachmentStyle := "warning"
-	if status == "FAILURE" {
+	if args.Status == ayd.StatusFailure {
 		attachmentStyle = "danger"
 	}
 
-	webhookURL := GetRequiredEnv("slack_webhook_url")
 	err = slack.PostWebhook(webhookURL, &slack.WebhookMessage{
 		Attachments: []slack.Attachment{{
 			Color:     attachmentStyle,
 			Fallback:  message,
-			Title:     fmt.Sprintf("[%s] %s", status, target),
-			TitleLink: target,
+			Title:     fmt.Sprintf("[%s] %s", args.Status.String(), args.TargetURL.String()),
+			TitleLink: args.TargetURL.String(),
 			Text:      message,
 			Footer:    aydURL.String(),
-			Ts:        json.Number(strconv.FormatInt(checkedAt.Unix(), 10)),
+			Ts:        json.Number(strconv.FormatInt(args.CheckedAt.Unix(), 10)),
 			Actions: []slack.AttachmentAction{{
 				Name: "Status Page",
 				Text: "Status Page",
@@ -126,8 +102,8 @@ func main() {
 		}},
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to send message: %s\n", err)
-		os.Exit(1)
+		logger.Failure(fmt.Sprintf("failed to send message: %s", err))
+		return
 	}
-	fmt.Println("Alert sent to Slack")
+	logger.Healthy("Alert sent to Slack")
 }
