@@ -6,6 +6,8 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/macrat/ayd v0.5.0 h1:1j1VTACDjMl9K/1GSpdQA3EL1xXBho/mpwEXi4SjOZI=
 github.com/macrat/ayd v0.5.0/go.mod h1:Gmx0nvsBqN99Ku2rtkpOeo/UUL/11Q3tCO5hpaUsalI=
+github.com/macrat/ayd v0.6.0 h1:aOLt4j0MBGPF+FuSWuQSkVqVfP2IfmIjRK0NOsTKbr8=
+github.com/macrat/ayd v0.6.0/go.mod h1:Gmx0nvsBqN99Ku2rtkpOeo/UUL/11Q3tCO5hpaUsalI=
 github.com/macrat/go-parallel-pinger v1.0.2 h1:BLWMJUpqDL7G8pxFZXJifTn3YM51eIkIgqtAD56DEHw=
 github.com/macrat/go-parallel-pinger v1.0.2/go.mod h1:s1SWsfXF4LhJmCcnD1P7eTqguyc69yhUzCWDXj8r+VE=
 github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=

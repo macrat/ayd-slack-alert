@@ -37,20 +37,6 @@ func GetRequiredEnv(logger ayd.Logger, key string) string {
 	return value
 }
 
-func GetMessage(aydURL, targetURL *url.URL) (string, error) {
-	resp, err := ayd.Fetch(aydURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch status: %w", err)
-	}
-
-	rs, err := resp.RecordsOf(targetURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch status: %w", err)
-	}
-
-	return rs[len(rs)-1].Message, nil
-}
-
 func main() {
 	args, err := ayd.ParseAlertPluginArgs()
 	if err != nil {
@@ -74,11 +60,6 @@ func main() {
 		return
 	}
 
-	message, err := GetMessage(aydURL, args.TargetURL)
-	if err != nil {
-		logger.Unknown(err.Error())
-	}
-
 	attachmentStyle := "warning"
 	if args.Status == ayd.StatusFailure {
 		attachmentStyle = "danger"
@@ -87,10 +68,10 @@ func main() {
 	err = slack.PostWebhook(webhookURL, &slack.WebhookMessage{
 		Attachments: []slack.Attachment{{
 			Color:     attachmentStyle,
-			Fallback:  message,
+			Fallback:  args.Message,
 			Title:     fmt.Sprintf("[%s] %s", args.Status.String(), args.TargetURL.String()),
 			TitleLink: args.TargetURL.String(),
-			Text:      message,
+			Text:      args.Message,
 			Footer:    aydURL.String(),
 			Ts:        json.Number(strconv.FormatInt(args.CheckedAt.Unix(), 10)),
 			Actions: []slack.AttachmentAction{{
