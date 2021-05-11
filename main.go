@@ -60,16 +60,26 @@ func main() {
 		return
 	}
 
-	attachmentStyle := "warning"
-	if args.Status == ayd.StatusFailure {
+	var attachmentStyle string
+	switch args.Status {
+	case ayd.StatusHealthy:
+		attachmentStyle = "good"
+	case ayd.StatusFailure:
 		attachmentStyle = "danger"
+	default:
+		attachmentStyle = "warning"
+	}
+
+	status := args.Status.String()
+	if args.Status == ayd.StatusHealthy {
+		status = "RESOLVED"
 	}
 
 	err = slack.PostWebhook(webhookURL, &slack.WebhookMessage{
 		Attachments: []slack.Attachment{{
 			Color:     attachmentStyle,
 			Fallback:  args.Message,
-			Title:     fmt.Sprintf("[%s] %s", args.Status.String(), args.TargetURL.String()),
+			Title:     fmt.Sprintf("[%s] %s", status, args.TargetURL.String()),
 			TitleLink: args.TargetURL.String(),
 			Text:      args.Message,
 			Footer:    aydURL.String(),
