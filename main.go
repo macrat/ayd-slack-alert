@@ -40,7 +40,7 @@ func GetRequiredEnv(logger ayd.Logger, key string) string {
 func main() {
 	args, err := ayd.ParseAlertPluginArgs()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "$ ayd-slack-alert MAILTO_URI TARGET_URI TARGET_STATUS TARGET_CHECKED_AT MESSAGE")
+		fmt.Fprintln(os.Stderr, "$ ayd-slack-alert MAILTO_URI TARGET_CHECKED_AT TARGET_STATUS TARGET_URI MESSAGE")
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
