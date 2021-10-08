@@ -1,6 +1,6 @@
 module github.com/macrat/ayd-slack-alert
 
-go 1.17
+go 1.16
 
 require (
 	github.com/macrat/ayd v0.10.0
