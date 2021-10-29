@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/url"
 	"os"
@@ -37,10 +38,23 @@ func GetRequiredEnv(logger ayd.Logger, key string) string {
 	return value
 }
 
+func Usage() {
+	fmt.Fprintln(os.Stderr, "Usage: ayd-slack-alert SLACK_ALERT_URI TARGET_CHECKED_AT TARGET_STATUS TARGET_URI MESSAGE")
+}
+
 func main() {
+	showVersion := flag.Bool("v", false, "show version and exit.")
+	flag.Usage = Usage
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("ayd-slack-alert %s (%s)\n", version, commit)
+		return
+	}
+
 	args, err := ayd.ParseAlertPluginArgs()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "$ ayd-slack-alert MAILTO_URI TARGET_CHECKED_AT TARGET_STATUS TARGET_URI MESSAGE")
+		Usage()
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
