@@ -59,7 +59,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	logger := ayd.NewLogger(args.AlertURL)
+	logger := ayd.NewLogger(&url.URL{Scheme: args.AlertURL.Scheme})
 
 	webhookURL := GetRequiredEnv(logger, "slack_webhook_url")
 
