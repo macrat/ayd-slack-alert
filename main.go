@@ -39,7 +39,7 @@ func GetRequiredEnv(logger ayd.Logger, key string) string {
 }
 
 func Usage() {
-	fmt.Fprintln(os.Stderr, "Usage: ayd-slack-alert SLACK_ALERT_URI TARGET_CHECKED_AT TARGET_STATUS TARGET_URI MESSAGE")
+	fmt.Fprintln(os.Stderr, "Usage: ayd-slack-alert SLACK_ALERT_URL CHECKED_AT TARGET_STATUS LATENCY TARGET_URL MESSAGE")
 }
 
 func main() {
