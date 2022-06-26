@@ -1,7 +1,7 @@
-Ayd? Slack Alert
-================
+ayd-slack-alert
+===============
 
-Slack alert sender for [Ayd?](https://github.com/macrat/ayd) status monitoring service.
+Slack alert sender for [Ayd](https://github.com/macrat/ayd) alive monitoring tool.
 
 
 ## Install
