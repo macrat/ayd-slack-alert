@@ -39,7 +39,7 @@ func GetRequiredEnv(logger ayd.Logger, key string) string {
 }
 
 func Usage() {
-	fmt.Fprintln(os.Stderr, "Usage: ayd-slack-alert SLACK_ALERT_URL CHECKED_AT TARGET_STATUS LATENCY TARGET_URL MESSAGE EXTRA_VALUES")
+	fmt.Fprintln(os.Stderr, "Usage: ayd-slack-alert SLACK_ALERT_URL RECORD")
 }
 
 func main() {
@@ -52,14 +52,24 @@ func main() {
 		return
 	}
 
-	args, err := ayd.ParseAlertPluginArgs()
-	if err != nil {
+	if len(os.Args) != 2 {
 		Usage()
+		os.Exit(2)
+	}
+	alertURL, err := ayd.ParseURL(os.Args[1])
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		Usage()
+		os.Exit(2)
+	}
+	record, err := ayd.ParseRecord(os.Args[2])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		Usage()
 		os.Exit(2)
 	}
 
-	logger := ayd.NewLogger(&ayd.URL{Scheme: args.AlertURL.Scheme})
+	logger := ayd.NewLogger(&ayd.URL{Scheme: alertURL.Scheme})
 
 	webhookURL := GetRequiredEnv(logger, "slack_webhook_url")
 
@@ -75,7 +85,7 @@ func main() {
 	}
 
 	var attachmentStyle string
-	switch args.Status {
+	switch record.Status {
 	case ayd.StatusHealthy:
 		attachmentStyle = "good"
 	case ayd.StatusFailure:
@@ -84,20 +94,20 @@ func main() {
 		attachmentStyle = "warning"
 	}
 
-	status := args.Status.String()
-	if args.Status == ayd.StatusHealthy {
+	status := record.Status.String()
+	if record.Status == ayd.StatusHealthy {
 		status = "RESOLVED"
 	}
 
 	err = slack.PostWebhook(webhookURL, &slack.WebhookMessage{
 		Attachments: []slack.Attachment{{
 			Color:     attachmentStyle,
-			Fallback:  args.Message,
-			Title:     fmt.Sprintf("[%s] %s", status, args.TargetURL.String()),
-			TitleLink: args.TargetURL.String(),
-			Text:      args.Message,
+			Fallback:  record.Message,
+			Title:     fmt.Sprintf("[%s] %s", status, alertURL.String()),
+			TitleLink: alertURL.String(),
+			Text:      record.Message,
 			Footer:    aydURL.String(),
-			Ts:        json.Number(strconv.FormatInt(args.Time.Unix(), 10)),
+			Ts:        json.Number(strconv.FormatInt(record.Time.Unix(), 10)),
 			Actions: []slack.AttachmentAction{{
 				Name: "Status Page",
 				Text: "Status Page",
