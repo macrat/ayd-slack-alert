@@ -1,6 +1,6 @@
 module github.com/macrat/ayd-slack-alert
 
-go 1.18
+go 1.21
 
 require (
 	github.com/macrat/ayd v0.16.5
@@ -9,6 +9,7 @@ require (
 
 require (
 	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	github.com/gorilla/websocket v1.5.1 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
